@@ -2,14 +2,15 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const Listing = require('./models/listing.js');
+const Review = require('./models/review.js');
 const path = require("path");
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
 const wrapAsync = require('./utils/wrapAsync.js');
 const ExpressError = require('./utils/ExpressError.js');
-const { listingSchema } = require("./schema.js");
+const { listingSchema, reviewSchema } = require("./schema.js");
 
-const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+const MONGO_URL = "mongodb://127.0.0.1:27017/wanderScope";
 
 main()
     .then(() => {
@@ -32,11 +33,21 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // schema validation middelware
 const validateListing = (req, res, next) => {
-    let {error} = listingSchema.validate(req.body);
-    let errMsg = error.details.map((el) => el.message).join(",");
-    if(error) {
+    const { error } = listingSchema.validate(req.body);
+    if (error) {
+        const errMsg = error.details.map((el) => el.message).join(", ");
         throw new ExpressError(400, errMsg);
     }
+    next();
+}
+
+const validateReview = (req, res, next) => {
+    const {error} = reviewSchema.validate(req.body);
+    if(error) {
+        const errMsg = error.details.map((el) => el.message).join(", ");
+        throw new ExpressError(400, errMsg);
+    }
+    next();
 }
 
 app.get('/', (req, res) => {
@@ -88,6 +99,25 @@ app.delete('/listings/:id', wrapAsync(async (req, res) => {
     await Listing.findByIdAndDelete(id);
     res.redirect("/listings");
 }));
+
+// Reviews routes
+// Review post route
+app.post('/listings/:id/reviews', validateReview, wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    let listing = await Listing.findById(id);
+    let newReview = new Review(req.body.review);
+
+    listing.reviews.push(newReview);
+
+    await newReview.save();
+    await listing.save();
+
+    res.redirect(`/listings/${id}`);
+}));
+
+
+
+
 
 // 404 Page not found
 app.use((req, res, next) => {
