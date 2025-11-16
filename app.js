@@ -42,8 +42,8 @@ const validateListing = (req, res, next) => {
 }
 
 const validateReview = (req, res, next) => {
-    const {error} = reviewSchema.validate(req.body);
-    if(error) {
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
         const errMsg = error.details.map((el) => el.message).join(", ");
         throw new ExpressError(400, errMsg);
     }
@@ -68,7 +68,7 @@ app.get('/listings/new', (req, res) => {
 // Show route
 app.get('/listings/:id', wrapAsync(async (req, res) => {
     let { id } = req.params;
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate('reviews');
     res.render("listings/show.ejs", { listing });
 }));
 
@@ -115,7 +115,15 @@ app.post('/listings/:id/reviews', validateReview, wrapAsync(async (req, res) => 
     res.redirect(`/listings/${id}`);
 }));
 
+// Review delete route
+app.delete("/listings/:id/reviews/:reviewId", wrapAsync(async (req, res) => {
+    let { id, reviewId } = req.params;
 
+    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+    await Review.findByIdAndDelete(reviewId);
+
+    res.redirect(`/listings/${id}`);
+}));
 
 
 
