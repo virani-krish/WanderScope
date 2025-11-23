@@ -12,24 +12,43 @@
             <img src="<%= listing.image %>" class="card-img-top show-img" alt="Listing Image">
             <div class="card-body">
                 <p class="card-text">
-                    <%= listing.description %> <br>
-                        &#8377; <%= Number(listing.price).toLocaleString("en-IN") %> <br>
-                            <%= listing.location %> <br>
-                                <%= listing.country %>
+                    <i>Owner : <b>
+                            <%= listing.owner.username %>
+                        </b></i>
                 </p>
+                <p class="card-text">
+                    <%= listing.description %>
+                </p>
+                <p class="card-text">&#8377; <%= Number(listing.price).toLocaleString("en-IN") %>
+                </p>
+                <p class="card-text">
+                    <%= listing.location %>
+                </p>
+                <p class="card-text">
+                    <%= listing.country %>
+                </p>
+
             </div>
         </div>
 
-        <div class="btns mb-3">
-            <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark edit-btn offset-3 col-1 me-2">Edit</a>
-            <form action="/listings/<%= listing._id %>?_method=DELETE" method="post">
-                <button class="btn btn-dark">Delete</button>
-            </form>
-        </div>
+        <% if (currUser && currUser._id.equals(listing.owner._id)) { %>
+            
+            <div class="btns mb-3">
+                <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark edit-btn offset-3 col-1 me-2">Edit</a>
+                <form action="/listings/<%= listing._id %>?_method=DELETE" method="post">
+                    <button class="btn btn-dark">Delete</button>
+                </form>
+            </div>
+
+        <% } %>
+
+        
+
+        
 
         <div class="col-6 offset-3 my-3">
+            <% if(currUser) { %>
             <hr>
-
             <h4>Leave a Review</h4>
             <form action="/listings/<%= listing._id %>/reviews" method="POST" novalidate class="needs-validation">
                 <div class="my-3">
@@ -45,14 +64,17 @@
                 <button class="btn btn-dark">Submit</button>
             </form>
 
+            <% } %>
+
             <hr>
+
             <h4>All Reviews</h4>
 
             <div class="row">
                 <% for(review of listing.reviews) { %>
                     <div class="card col-5 my-2 mx-3 py-2 px-3">
                         <div class="card-body">
-                            <h5 class="card-title">Aman</h5>
+                            <h5 class="card-title"><%= review.author.username %></h5>
                             <p class="card-text">
                                 <%= review.comment %>
                             </p>
@@ -60,13 +82,18 @@
                                 <%= review.rating %> ⭐
                             </p>
                         </div>
-                        <form action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" method="POST">
+                        <% if(currUser && currUser._id.equals(review.author._id)) { %>
+                        <form action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE"
+                            method="POST">
                             <button class="btn btn-sm btn-outline-dark my-2">Delete</button>
                         </form>
+                        <% } %>
                     </div>
                     <% } %>
             </div>
 
         </div>
+
+        
 
     </div>
