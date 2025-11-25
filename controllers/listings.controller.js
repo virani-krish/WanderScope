@@ -21,8 +21,13 @@ module.exports.showListing = async (req, res) => {
     }
 };
 
-module.exports.createListing = async (req, res, next) => {
+module.exports.createListing = async (req, res) => {
+    let url = req.file.path;
+    let filename = req.file.filename;
+    // console.log(url, "---", fileName);
+
     const newListing = new Listing(req.body.listing);
+    newListing.image = { url, filename };
     newListing.owner = req.user._id;
     await newListing.save();
     req.flash("success", "New listing created successfully!");
@@ -37,14 +42,25 @@ module.exports.renderEditForm = async (req, res) => {
         res.redirect("/listings");
     }
     else {
+        let originalImageUrl = listing.image.url;
+        originalImageUrl = originalImageUrl.replace("/upload", "/upload/w_250");
+        listing.image.url = originalImageUrl;
         res.render("listings/edit.ejs", { listing });
     }
 };
 
 module.exports.updateListing = async (req, res) => {
     let { id } = req.params;
+    let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
 
-    await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+
+    if (typeof req.file !== "undefined") {
+        let url = req.file.path;
+        let filename = req.file.filename;
+        listing.image = { url, filename };
+        await listing.save();
+    }
+
     req.flash("success", "Listing updated successfully!");
     res.redirect(`/listings/${id}`);
 };
